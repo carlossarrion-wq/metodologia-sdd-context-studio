@@ -6,6 +6,7 @@ version: "1.0.0"
 language: "es"
 owner: "Oficina de Calidad y Arquitectura"
 status: "draft"
+license: "UNLICENSED"
 ---
 
 # Skill: Diseñador de metodología SDD asistida por IA
