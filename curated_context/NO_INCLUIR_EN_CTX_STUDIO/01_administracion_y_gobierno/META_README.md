@@ -1,6 +1,6 @@
 ---
 id: "meta-readme"
-title: "Curated_ctx — índice y guía de ingestión"
+title: "curated_context — índice y guía de ingestión"
 category: "metadata"
 document_type: "repository_guide"
 authority: "operational"
@@ -10,7 +10,7 @@ curated_on: "2026-10-10"
 usage: "grounding"
 ---
 
-# Curated_ctx — Paquete de contexto para grounding
+# curated_context — Paquete de contexto para grounding
 
 Esta carpeta contiene una versión normalizada de `context_base/` preparada para su carga en Context Studio. Los documentos preservan el contenido fuente, incorporan metadatos homogéneos y separan explícitamente la autoridad de una norma de la utilidad de una referencia.
 
