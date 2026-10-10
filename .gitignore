@@ -1,3 +1,7 @@
 .DS_Store
 *.swp
 *.swo
+
+# Local Context Studio credentials — never commit
+credentials/*.json
+!credentials/*.example.json
