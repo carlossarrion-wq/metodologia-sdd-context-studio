@@ -106,58 +106,6 @@ Usar estas secciones, omitiendo sólo las que no correspondan y explicando el mo
 11. **Plan de implementación** — pasos secuenciados, dependencias y decisiones pendientes.
 12. **Trazabilidad y validación requerida** — fuentes, conflictos y revisiones humanas necesarias.
 
-## Acceso obligatorio al contexto mediante MCP Context Broker
-
-El agente dispone de un MCP Context Broker para descubrir, recuperar, relacionar y actualizar el conocimiento almacenado en Context Studio. Cuando este MCP esté disponible, debe utilizarse como mecanismo preferente de grounding en lugar de basarse en memoria, nombres de archivos locales o inferencias sobre el contenido indexado.
-
-### Principio operativo
-
-1. **Descubrir antes de consultar.** Al iniciar una tarea, ejecutar `context-broker-get-contexts` para identificar los `context_id`, nombres y descripciones realmente disponibles. No asumir que los contextos recomendados existen o que conservan un identificador concreto.
-2. **Verificar estructura y procedencia.** Para cada contexto relevante, consultar `context-broker-get-context-metadata` y `context-broker-get-context-schema` antes de utilizarlo para una decisión material. Esto permite verificar fuentes, sistemas conectados, documentos ingeridos, modelo ontológico, tipos de nodo, relaciones, propiedades y vocabulario.
-3. **Recuperar de forma proporcional.** Empezar por `context-broker-vector-query` para preguntas semánticas; utilizar `context-broker-hybrid-query` cuando se necesite combinar relevancia semántica y relaciones; utilizar `context-broker-targeted-graph-query` para entidades, filtros o relaciones concretas; y `context-broker-graph-query` sólo para exploración de relaciones.
-4. **Explorar grafos con límites seguros.** En `context-broker-graph-query`, usar siempre `max_depth=1` y `limit=5`, salvo autorización explícita y evidencia de que la plataforma admite una consulta mayor. Los valores por defecto pueden producir esperas superiores a 60 segundos.
-5. **Cerrar el ciclo de aprendizaje.** Tras una revisión humana, cuando un artefacto, decisión, métrica, evidencia o lección aprendida sea esencial y apto para reutilización, disparar `context-broker-post-events`. El evento debe apuntar a la fuente externa o documento ya publicado (por ejemplo GitHub, Jira, SharePoint, Splunk, SAP o repositorio documental) y no debe enviar secretos, datos personales no minimizados ni contenido no aprobado.
-
-### Estructura de contexto esperada
-
-La estructura almacenada se gobierna como un grafo de conocimiento. La representación exacta debe obtenerse en tiempo de ejecución con `context-broker-get-context-schema`; no se deben inventar tipos, propiedades ni relaciones que no estén presentes en el schema devuelto.
-
-Como modelo funcional, el agente debe buscar y relacionar, cuando existan, los siguientes elementos:
-
-| Elemento de contexto | Uso en el diseño metodológico | Comprobación MCP |
-|---|---|---|
-| Contexto | Identifica el ámbito de conocimiento, audiencia, propósito y controles de acceso. | `get-contexts`, `get-context-metadata` |
-| Fuente de ingesta / sistema conectado | Acredita procedencia, actualización, propietario y restricciones del conocimiento. | `get-context-metadata` |
-| Documento / artefacto | Aporta evidencia: constitución, normas, playbook, AS-IS, blueprint, spec, métricas o lecciones. | `vector-query`, `hybrid-query`, metadata |
-| Esquema / ontología | Define tipos de nodo, aristas, propiedades y vocabulario válidos. | `get-context-schema` |
-| Entidad y relación | Conecta casos de uso, procesos, requisitos, riesgos, controles, herramientas, roles y evidencias. | `targeted-graph-query`, `graph-query` |
-| Evento de actualización | Notifica contenido revisado y publicado que debe procesarse o sincronizarse. | `post-events` |
-
-### Secuencia MCP por fase
-
-| Momento | Operaciones requeridas | Resultado esperado |
-|---|---|---|
-| Inicio / intake | `get-contexts` → `get-context-metadata` → `get-context-schema` | Contextos aplicables, ACL, fuentes, frescura y estructura verificadas. |
-| Descubrimiento AS-IS | `vector-query` y, si hay relaciones relevantes, `hybrid-query` | Evidencia y terminología recuperadas con referencias a fuente. |
-| Diseño TO-BE y trazabilidad | `targeted-graph-query`; `graph-query` con `max_depth=1`, `limit=5` para exploración | Relaciones verificadas entre proceso, requisito, riesgo, control, rol y herramienta. |
-| Revisión de propuesta | `hybrid-query` para contrastar restricciones y evidencias | Conflictos, vacíos y activos `provisional`/`needs_review` declarados. |
-| Aprendizaje aprobado | `post-events` | Sincronización iniciada para artefactos aprobados, con procedencia y clasificación conservadas. |
-
-### Reglas específicas para las operaciones MCP
-
-- `context-broker-get-contexts`: usar para descubrir los contextos activos al comienzo de una sesión o cuando cambie el ámbito.
-- `context-broker-get-context-metadata`: usar para comprobar documentos ingeridos, fuentes, sistemas conectados y metadatos antes de afirmar cobertura o actualidad.
-- `context-broker-get-context-schema`: usar para entender la ontología en JSON-LD y formular consultas compatibles con el vocabulario real.
-- `context-broker-vector-query`: usar para recuperación semántica inicial y preguntas abiertas.
-- `context-broker-hybrid-query`: preferirlo cuando la respuesta requiere a la vez similitud semántica y conexiones de grafo.
-- `context-broker-targeted-graph-query`: usar para preguntas estructuradas precisas, por ejemplo encontrar artefactos de un caso de uso, riesgos asociados a una fase o requisitos vinculados a un control.
-- `context-broker-graph-query`: reservar para exploración; aplicar siempre `max_depth=1` y `limit=5`.
-- `context-broker-post-events`: usar sólo tras validación humana y publicación de la evidencia en una fuente autorizada. El evento no equivale a aprobación automática de la ingesta ni convierte el contenido en norma.
-
-### Fallback si MCP no está disponible
-
-Declarar `[BLOQUEO] MCP Context Broker no disponible o sin acceso`. Se puede elaborar un borrador basado en los documentos locales autorizados, pero debe etiquetarse **BORRADOR CONDICIONADO**, indicar la fecha/versión de los ficheros usados y solicitar validación de que reflejan el contexto indexado actual.
-
 ## Preguntas de arranque
 
 Si no están respondidas, preguntar como máximo las necesarias para desbloquear el diseño:
